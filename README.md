@@ -15,7 +15,7 @@ The plugin requires some setup. In wp-config, the following constants must be de
 *CGIT_FACEBOOK_APPID is the App ID from your app's dashboard.  
 *CGIT_FACEBOOK_SECRET is the 'App Secret' from your app's dashboard  
 *CGIT_FACEBOOK_USERID can be gotten most easily by just typing the facebook page URL into http://findmyfacebookid.com/  
-*CGIT_FACEBOOK_TOKEN is gotten from developers.facebook.com -> Tools and Support -> Access Token Tool (use the App Token)  
+*CGIT_FACEBOOK_TOKEN is gotten from developers.facebook.com -> Tools and Support -> Access Token Tool (use the App Token) - you need everything AFTER the pipe, so "672440359555259|2ZphKT83MH4uOlcNPsYtXdhMcKU" -> 2ZphKT83MH4uOlcNPsYtXdhMcKU
 
 This can be found using the facebook profile URL.
 
