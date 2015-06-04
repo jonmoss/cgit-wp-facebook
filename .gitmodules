@@ -1,0 +1,6 @@
+[submodule "facebook-php-sdk-v4"]
+	path = facebook-php-sdk-v4
+	url = https://github.com/facebook/facebook-php-sdk-v4.git
+[submodule "utilphp"]
+	path = utilphp
+	url = https://github.com/brandonwamboldt/utilphp.git
