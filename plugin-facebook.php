@@ -126,7 +126,7 @@ function get_cached_facebook_feed($softLimit = 3, $typesOf = false, $trimOutput 
         $typesOf = array('photo');
     }
     // Server cache settings
-    $cache_file = ABSPATH . '../cache/facebook-cache['.$softLimit.'].html';
+    $cache_file = content_url() . '/cgit-cache/facebook-cache['.$softLimit.'].html';
     $cache_time = 10*60; // 10 minutes
 
     // Generate output based on settings
