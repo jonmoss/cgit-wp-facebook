@@ -17,11 +17,21 @@ if (! defined('CGIT_FACEBOOK_APPID')||! defined('CGIT_FACEBOOK_USERID') ||! defi
     add_action('admin_notices', 'cgit_facebook_notice_constants');
 }
 
-require_once(dirname(__FILE__) . '/vendor/facebook-php-sdk-v4-4.0-dev/autoload.php');
+if (file_exists(dirname(__FILE__) . 'facebook-php-sdk-v4/autoload.php')){
+    throw new Exception("Error: No Facebook SDK detected, please pull latest Facebook SDK.", 1);
+
+}
+
+if (file_exists(dirname(__FILE__) . 'utilphp/util.php')){
+    throw new Exception("Error: No utilphp detected, please pull latest util.php.", 1);
+
+}
+
+require_once(dirname(__FILE__) . 'facebook-php-sdk-v4/autoload.php');
 use \Facebook\FacebookRequest;
 use \Facebook\FacebookSession;
 use \Facebook\GraphPage;
-require_once(dirname(__FILE__) . '/vendor/utilphp-1.0.7/util.php');
+require_once(dirname(__FILE__) . 'utilphp/util.php');
 
 
 
