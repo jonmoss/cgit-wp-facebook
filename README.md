@@ -1,6 +1,15 @@
 # Castlegate IT WP Facebook Feed #
 
-Castlegate IT WP Facebook Feed is a Facebook feed plugin for WordPress. It provides functions for displaying a Facebook feed on a page, supporting caching. It requires at least PHP 5.3, Facebook's PHP SDK v4, and utilPHP.
+Castlegate IT WP Facebook Feed is a Facebook feed plugin for WordPress. It provides functions for displaying a Facebook feed on a page, supporting caching. 
+
+## Requirements ##
+
+This plugin requires at least PHP 5.3.
+
+It also requires Facebook's PHP SDK v4, and utilPHP;
+
+They are included as submodules, so the easiest way to get them is to pull the repository.
+
 
 ## Facebook Apps ##
 
