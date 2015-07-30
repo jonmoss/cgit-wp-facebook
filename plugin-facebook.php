@@ -12,17 +12,23 @@ License: MIT
 
 */
 require_once dirname( __FILE__ ) . '/functions.php';
-
 if (! defined('CGIT_FACEBOOK_APPID')||! defined('CGIT_FACEBOOK_USERID') ||! defined('CGIT_FACEBOOK_SECRET') ||! defined('CGIT_FACEBOOK_TOKEN') ||! defined('CGIT_FACEBOOK_URL')){
-    add_action('admin_notices', 'cgit_facebook_notice_constants');
+    if (function_exists(add_action)){
+        add_action('admin_notices', 'cgit_facebook_notice_constants');
+    }
+    else {
+        echo "ERROR: One or more constants undefined. Please see README.md!";
+        echo "ERROR: Dumping constant values.";
+        print_r(array ('APPID' => CGIT_FACEBOOK_APPID, 'TOKEN' => CGIT_FACEBOOK_TOKEN, 'SECRET' => CGIT_FACEBOOK_SECRET, 'USERID' => CGIT_FACEBOOK_USERID, 'URL' => CGIT_FACEBOOK_URL));
+    }
 }
 
-if (file_exists(dirname(__FILE__) . 'facebook-php-sdk-v4/autoload.php')){
+if (!file_exists(dirname(__FILE__) . 'facebook-php-sdk-v4/autoload.php')){
     throw new Exception("Error: No Facebook SDK detected, please pull latest Facebook SDK.", 1);
 
 }
 
-if (file_exists(dirname(__FILE__) . 'utilphp/util.php')){
+if (!file_exists(dirname(__FILE__) . 'utilphp/util.php')){
     throw new Exception("Error: No utilphp detected, please pull latest util.php.", 1);
 
 }
@@ -126,7 +132,8 @@ function get_cached_facebook_feed($softLimit = 3, $typesOf = false, $trimOutput 
         $typesOf = array('photo');
     }
     // Server cache settings
-    $cache_file = content_url() . '/cgit-cache/facebook-cache['.$softLimit.'].html';
+
+    $cache_file = function_exists(content_url) ? content_url() : dirname(__FILE_)_ . '/cgit-cache/facebook-cache['.$softLimit.'].html';
     $cache_time = 10*60; // 10 minutes
 
     // Generate output based on settings
@@ -148,19 +155,22 @@ function get_cached_facebook_feed($softLimit = 3, $typesOf = false, $trimOutput 
     return $feed;
 }
 
-function cgit_facebook_feed_shortcode ($atts) {
+if(function_exists(add_shortcode)){
 
-    $defaults = array(
-        'limit'     => 3,
-        'types'     => false,
-        'trimOutput'=> true
-    );
+    function cgit_facebook_feed_shortcode ($atts) {
 
-    $atts = shortcode_atts($defaults, $atts);
+        $defaults = array(
+            'limit'     => 3,
+            'types'     => false,
+            'trimOutput'=> true
+        );
 
-    return cgit_facebook_renderer(get_cached_facebook_feed($atts['limit'], $atts['types'], $att['trimOutput']));
+        $atts = shortcode_atts($defaults, $atts);
 
+        return cgit_facebook_renderer(get_cached_facebook_feed($atts['limit'], $atts['types'], $att['trimOutput']));
+
+    }
+
+    add_shortcode('facebook_feed', 'cgit_facebook_feed_shortcode');
 }
-
-add_shortcode('facebook_feed', 'cgit_facebook_feed_shortcode');
 ?>
