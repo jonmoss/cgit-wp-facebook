@@ -23,25 +23,25 @@ if (! defined('CGIT_FACEBOOK_APPID')||! defined('CGIT_FACEBOOK_USERID') ||! defi
     }
 }
 
-if (!file_exists(dirname(__FILE__) . 'facebook-php-sdk-v4/autoload.php')){
+if (!file_exists(dirname(__FILE__) . '/facebook-php-sdk-v4/autoload.php')){
     throw new Exception("Error: No Facebook SDK detected, please pull latest Facebook SDK.", 1);
 
 }
 
-if (!file_exists(dirname(__FILE__) . 'utilphp/util.php')){
+if (!file_exists(dirname(__FILE__) . '/utilphp/util.php')){
     throw new Exception("Error: No utilphp detected, please pull latest util.php.", 1);
 
 }
 
-require_once(dirname(__FILE__) . 'facebook-php-sdk-v4/autoload.php');
+require_once(dirname(__FILE__) . '/facebook-php-sdk-v4/autoload.php');
 use \Facebook\FacebookRequest;
 use \Facebook\FacebookSession;
 use \Facebook\GraphPage;
-require_once(dirname(__FILE__) . 'utilphp/util.php');
+require_once(dirname(__FILE__) . '/utilphp/util.php');
 
 
 
-function get_facebook_feed($softLimit = 3, $typesOf = false)
+function cgit_get_facebook_feed($softLimit = 3, $typesOf = false)
 {
     if (!$typesOf){
         $typesOf = array('photo');
@@ -55,7 +55,7 @@ function get_facebook_feed($softLimit = 3, $typesOf = false)
 
     // Create session an request
     $session = new FacebookSession($access_token);
-    $request = new FacebookRequest($session, 'GET', '/'.$userID.'/feed');
+    $request = new FacebookRequest($session, 'GET', '/'.$userID.'/posts?fields=id,name,picture,type,link,message,created_time');
 
     // Get data back
     $response = $request->execute();
@@ -64,6 +64,7 @@ function get_facebook_feed($softLimit = 3, $typesOf = false)
 
     // Retrieve up to $softLimit of photo posts
     $array_of_posts = array();
+
     foreach($page_data->getPropertyAsArray('data') as $post) {
 
         if (count($array_of_posts) >= $softLimit) {
@@ -71,7 +72,7 @@ function get_facebook_feed($softLimit = 3, $typesOf = false)
         }
 
         // Only get statues or photos posted by the userID's profile
-        if ($post->getProperty('from')->getProperty('id') == $userID &&
+        if (substr($post->getProperty('id'), 0, strlen($userID)) == $userID &&
                 in_array($post->getProperty('type'), $typesOf)
         ) {
             // Save an bunch of information from this post, we'll use this later on for rendering
@@ -80,7 +81,8 @@ function get_facebook_feed($softLimit = 3, $typesOf = false)
                     'desc' => $post->getProperty('message'),
                     'image' => $post->getProperty('picture'),
                     'link' => $post->getProperty('link'),
-                    'date' => $post->getProperty('created_time')
+                    'date' => $post->getProperty('created_time'),
+                    'type' => $post->getProperty('type')
             );
         }
     }
@@ -88,11 +90,12 @@ function get_facebook_feed($softLimit = 3, $typesOf = false)
     return $array_of_posts;
 }
 
-function cgit_facebook_renderer($array_of_posts, $trimOutput = true){
+function cgit_facebook_renderer($array_of_posts, $trimOutput = true) {
     // Generate markup for the feed
     $feed_string = '';
-    foreach ($array_of_posts as $single_post)
-    {
+    $i = 0;
+    foreach ($array_of_posts as $single_post) {
+
         $title = htmlentities($single_post['title']);
         $link = htmlentities($single_post['link']);
         $description = util::linkify($single_post['desc']);
@@ -101,7 +104,6 @@ function cgit_facebook_renderer($array_of_posts, $trimOutput = true){
         preg_match('/<a[^>]+>\s*<img[^>]+>\s*<\/a>/', $description, $matched);
         $description = preg_replace('/<br ?\/?>/', '', $description);
         $description = preg_replace('/<a[^>]*><img[^>]*><\/a>/', '', $description);
-        $description = str_replace(CGIT_FACEBOOK_URL, ' ', $description);
         if ($trimOutput){
             if (strlen($description) > 140) {
                 $description = util::safe_truncate($description, 140);
@@ -115,25 +117,25 @@ function cgit_facebook_renderer($array_of_posts, $trimOutput = true){
             $imagelink = '';
         }
 
-        //$feed_string .= '<p><strong><a href="'.$link.'" title="'.$title.'">'.$title.'</a></strong></p>';
-        $feed_string .= '<div class="feed-item clearfix">';
+        $feed_string .= '<div class="feed-item">';
         $feed_string .= '<span class="fb-date">'.$date.'</span><span class="line-span"><hr /></span>';
-        $feed_string .= '<div class="facebook-wrapper clearfix"><p>'.$imagelink;
-        $feed_string .= '<span>'.$description.'</span></p></div>';
+        $feed_string .= '<div class="facebook-wrapper"><p>'.$imagelink;
+        $feed_string .= '<span class="fb-desc">'.$description.'</span></p></div>';
         $feed_string .= '</div>';
-            }
+
+    }
 
     return $feed_string;
 }
 
-function get_cached_facebook_feed($softLimit = 3, $typesOf = false, $trimOutput = false)
+function cgit_get_cached_facebook_feed($softLimit = 3, $typesOf = false, $trimOutput = false)
 {
     if (!$typesOf) {
         $typesOf = array('photo');
     }
     // Server cache settings
 
-    $cache_file = function_exists(content_url) ? content_url() : dirname(__FILE_)_ . '/cgit-cache/facebook-cache['.$softLimit.'].html';
+    $cache_file = dirname(__FILE__) . '/cgit-cache/facebook-cache['.$softLimit.'].html';
     $cache_time = 10*60; // 10 minutes
 
     // Generate output based on settings
@@ -143,7 +145,7 @@ function get_cached_facebook_feed($softLimit = 3, $typesOf = false, $trimOutput 
         $feed = unserialize(file_get_contents($cache_file));
         // Else, try to get feed from Twitter
     } else {
-        $feed = get_facebook_feed($softLimit, $typesOf, $trimOutput);
+        $feed = cgit_get_facebook_feed($softLimit, $typesOf, $trimOutput);
         // If feed available, use that
         if($feed) {
             file_put_contents($cache_file, maybe_serialize($feed));
@@ -155,22 +157,42 @@ function get_cached_facebook_feed($softLimit = 3, $typesOf = false, $trimOutput 
     return $feed;
 }
 
-if(function_exists(add_shortcode)){
+// Returns cleaned output for doing custom rendering if you need it.
+function cgit_facebook_cleaned_output($softLimit = 3, $typesOf = false, $trimOutput = false) {
 
-    function cgit_facebook_feed_shortcode ($atts) {
-
-        $defaults = array(
-            'limit'     => 3,
-            'types'     => false,
-            'trimOutput'=> true
-        );
-
-        $atts = shortcode_atts($defaults, $atts);
-
-        return cgit_facebook_renderer(get_cached_facebook_feed($atts['limit'], $atts['types'], $att['trimOutput']));
-
+    if (!$typesOf) {
+        $typesOf = array('photo');
     }
 
-    add_shortcode('facebook_feed', 'cgit_facebook_feed_shortcode');
+    $dataDirty = cgit_get_facebook_feed($softLimit, $typesOf, $trimOutput);
+    $dataClean = array();
+    $c = 0;
+
+    foreach ($dataDirty as $data) {
+        $dataClean[$c]['Title']  = htmlentities($data['title']);
+
+
+        $dataClean[$c]['Date'] = date('l F d, Y', strtotime($data['date']));
+        $description = util::linkify($data['desc']);
+
+        preg_match('/<a[^>]+>\s*<img[^>]+>\s*<\/a>/', $description, $matched);
+        $description = preg_replace('/<br ?\/?>/', '', $description);
+        $description = preg_replace('/<a[^>]*><img[^>]*><\/a>/', '', $description);
+
+        $dataClean[$c]['Description'] = $description;
+        $dataClean[$c]['Type'] = $data['type'];
+
+        if ($data['image']){
+            $dataClean[$c]['Image'] = $data['image'];
+        }
+        if ($data['link']) {
+            $dataClean[$c]['Link'] = htmlentities($data['link']);
+        }
+
+
+        $c++;
+    }
+
+    return $dataClean;
+
 }
-?>
